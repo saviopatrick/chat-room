@@ -17,21 +17,17 @@
 		<div class="join-container">
 			<header class="join-header">
 				<h1><i class="fas fa-smile"></i> ChatCord</h1>
+				<div class="user-info">
+					<span id="logged-user">Welcome, <span id="username-display"></span></span>
+					<button id="logout-btn" class="btn btn-sm">Logout</button>
+				</div>
 			</header>
 			<main class="join-main">
-				<form action="chat.html">
+				<form action="chat.html" id="room-form">
+					<input type="hidden" name="username" id="username-input" />
+					<input type="hidden" name="userId" id="userId-input" />
 					<div class="form-control">
-						<label for="username">Username</label>
-						<input
-							type="text"
-							name="username"
-							id="username"
-							placeholder="Enter username..."
-							required
-						/>
-					</div>
-					<div class="form-control">
-						<label for="room">Room</label>
+						<label for="room">Select Room</label>
 						<select name="room" id="room">
 							<option value="JavaScript">JavaScript</option>
 							<option value="Python">Python</option>
@@ -45,5 +41,24 @@
 				</form>
 			</main>
 		</div>
+
+		<script>
+			// Check if user is logged in
+			const user = sessionStorage.getItem('user');
+			if (!user) {
+				window.location.href = 'login.html';
+			} else {
+				const userData = JSON.parse(user);
+				document.getElementById('username-display').textContent = userData.username;
+				document.getElementById('username-input').value = userData.username;
+				document.getElementById('userId-input').value = userData.id;
+			}
+
+			// Logout functionality
+			document.getElementById('logout-btn').addEventListener('click', () => {
+				sessionStorage.removeItem('user');
+				window.location.href = 'login.html';
+			});
+		</script>
 	</body>
 </html>

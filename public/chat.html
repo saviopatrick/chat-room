@@ -28,15 +28,29 @@
         <div class="chat-messages"></div>
       </main>
       <div class="chat-form-container">
+        <div id="file-preview" class="file-preview"></div>
         <form id="chat-form">
-          <input
-            id="msg"
-            type="text"
-            placeholder="Enter Message"
-            required
-            autocomplete="off"
-          />
-          <button class="btn"><i class="fas fa-paper-plane"></i> Send</button>
+          <div class="input-group">
+            <input
+              id="msg"
+              type="text"
+              placeholder="Enter Message or /command"
+              required
+              autocomplete="off"
+            />
+            <input
+              type="file"
+              id="file-input"
+              accept="image/*"
+              style="display: none;"
+            />
+            <button type="button" id="file-upload-btn" class="btn btn-file">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <button type="submit" class="btn">
+              <i class="fas fa-paper-plane"></i> Send
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -47,6 +61,7 @@
       crossorigin="anonymous"
     ></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/fileUpload.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
