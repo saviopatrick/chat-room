@@ -1,3 +1,6 @@
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  
 const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
@@ -15,29 +18,37 @@ const { username, room } = Qs.parse(location.search, {
 
 // Check authentication
 const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+console.log('Current user:', currentUser);
 if (!currentUser) {
   window.location.href = 'login.html';
+  return;
 }
 
 // Show admin commands if user is admin
 if (currentUser && currentUser.role === 'admin') {
-  document.getElementById('admin-command').style.display = 'block';
+  console.log('User is admin, showing admin commands');
+  const adminCommand = document.getElementById('admin-command');
+  if (adminCommand) {
+    adminCommand.style.display = 'block';
+  }
 }
 
 const socket = io();
 
 // Join chatroom
+console.log('Joining room:', { username, room });
 socket.emit('joinRoom', { username, room });
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {
+  console.log('Room users event:', { room, users });
   outputRoomName(room);
   outputUsers(users);
 });
 
 // Message from server
 socket.on('message', (message) => {
-  console.log(message);
+  console.log('Message event:', message);
   outputMessage(message);
 
   // Scroll down
@@ -230,3 +241,5 @@ document.getElementById('leave-btn').addEventListener('click', () => {
     window.location = '../index.html';
   }
 });
+
+}); // End of DOMContentLoaded event handler

@@ -89,6 +89,8 @@ app.get('/', (req, res) => {
 
 // Run when client connects
 io.on("connection", (socket) => {
+  console.log(`New client connected: ${socket.id}`);
+  
   // Check client limit
   if (connectedClients >= MAX_CLIENTS) {
     socket.emit("message", formatMessage(botName, "Server is full. Maximum 10 clients allowed."));
@@ -114,6 +116,7 @@ io.on("connection", (socket) => {
   });
   
   socket.on("joinRoom", ({ username, room }) => {
+    console.log(`User ${username} joining room ${room}`);
     const user = userJoin(socket.id, username, room);
     socket.join(user.room);
 
@@ -137,12 +140,17 @@ io.on("connection", (socket) => {
 
   // Listen for chatMessage
   socket.on("chatMessage", (msg) => {
+    console.log(`Message from ${socket.id}: ${msg}`);
     const user = getCurrentUser(socket.id);
-    if (!user) return;
+    if (!user) {
+      console.log(`No user found for socket ${socket.id}`);
+      return;
+    }
 
     // Check if message is a command
     if (msg.startsWith('/')) {
       const commandResult = processCommand(msg, user.username, socket, io);
+      console.log(`Command result: ${JSON.stringify(commandResult)}`);
       
       switch (commandResult.type) {
         case 'disconnect':
