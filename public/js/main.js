@@ -1,3 +1,4 @@
+// Get DOM elements
 const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
@@ -7,125 +8,118 @@ const userList = document.getElementById('users');
 const user = sessionStorage.getItem('user');
 if (!user) {
   window.location.href = 'login.html';
+  throw new Error('No user session');
 }
 
 const userData = JSON.parse(user);
 
-// Get username and room from URL
-const { username, room, userId } = Qs.parse(location.search, {
+// Get URL parameters
+const urlParams = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
-// Verify that the logged-in user matches the URL parameters
-if (username && username !== userData.username) {
-  window.location.href = 'login.html';
-}
+// Use URL parameters or fallback to session data
+const finalUsername = urlParams.username || userData.username;
+const finalUserId = urlParams.userId || userData.id;
+const finalRoom = urlParams.room || 'JavaScript';
 
-// Use session data if URL parameters are missing
-const finalUsername = username || userData.username;
-const finalUserId = userId || userData.id;
-const finalRoom = room || 'JavaScript'; // Default room if not specified
-
+// Initialize socket connection
 const socket = io();
 
-// Debug socket connection
+// Socket connection handlers
 socket.on('connect', () => {
   console.log('Connected to server');
+  // Join room after connection is established
+  socket.emit('joinRoom', { 
+    username: finalUsername, 
+    room: finalRoom, 
+    userId: finalUserId 
+  });
 });
 
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
+  addMessage('System', 'Disconnected from server');
 });
 
-// Join chatroom
-socket.emit('joinRoom', { username: finalUsername, room: finalRoom, userId: finalUserId });
-console.log('Emitted joinRoom event:', { username: finalUsername, room: finalRoom, userId: finalUserId });
-
-// Get room and users
-socket.on('roomUsers', ({ room, users }) => {
-  outputRoomName(room);
-  outputUsers(users);
+socket.on('connect_error', (error) => {
+  console.error('Connection error:', error);
+  addMessage('System', 'Connection error: ' + error);
 });
 
-// Message from server
+// Chat message handler
 socket.on('message', (message) => {
-  console.log(message);
-  outputMessage(message);
-
-  // Scroll down
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  console.log('Received message:', message);
+  addMessage(message.username, message.text, message.file);
 });
 
-// Handle disconnection
-socket.on('disconnect', () => {
-  outputMessage({
-    username: 'System',
-    text: 'You have been disconnected from the server.',
-    time: new Date().toLocaleTimeString()
-  });
+// Room users handler
+socket.on('roomUsers', (data) => {
+  console.log('Room users:', data);
+  roomName.textContent = data.room;
+  updateUserList(data.users);
 });
 
-// Message submit
+// File message handler
+socket.on('fileMessage', (data) => {
+  console.log('Received file message:', data);
+  addMessage(data.username, data.message, data.file);
+});
+
+// Form submission handler
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
-
-  // Get message text
-  let msg = e.target.elements.msg.value;
-
-  msg = msg.trim();
-
-  if (!msg) {
-    return false;
-  }
-
-  // Emit message to server
-  socket.emit('chatMessage', msg);
-
+  
+  const messageInput = e.target.elements.msg;
+  const message = messageInput.value.trim();
+  
+  if (!message) return;
+  
+  // Send message
+  socket.emit('chatMessage', message);
+  
   // Clear input
-  e.target.elements.msg.value = '';
-  e.target.elements.msg.focus();
+  messageInput.value = '';
+  messageInput.focus();
 });
 
-// Output message to DOM
-function outputMessage(message) {
+// Helper function to add messages to chat
+function addMessage(username, text, file = null) {
   const div = document.createElement('div');
   div.classList.add('message');
   
-  const p = document.createElement('p');
-  p.classList.add('meta');
-  p.innerText = message.username;
-  p.innerHTML += `<span>${message.time}</span>`;
-  div.appendChild(p);
+  const metaP = document.createElement('p');
+  metaP.classList.add('meta');
+  metaP.innerText = username;
+  metaP.innerHTML += `<span>${new Date().toLocaleTimeString()}</span>`;
+  div.appendChild(metaP);
   
-  const para = document.createElement('p');
-  para.classList.add('text');
+  const textP = document.createElement('p');
+  textP.classList.add('text');
   
-  // Check if message contains a file
-  if (message.file) {
-    para.innerHTML = `
-      ${message.text}
+  if (file) {
+    textP.innerHTML = `
+      ${text}
       <div class="file-message">
-        <img src="${message.file.url}" alt="${message.file.originalname}" style="max-width: 300px; max-height: 200px; border-radius: 5px; margin-top: 5px;">
+        <img src="${file.url}" alt="${file.originalname}" style="max-width: 300px; max-height: 200px; border-radius: 5px; margin-top: 5px;">
         <div class="file-info">
-          <small>${message.file.originalname} (${formatFileSize(message.file.size)})</small>
+          <small>${file.originalname} (${formatFileSize(file.size)})</small>
         </div>
       </div>
     `;
   } else {
-    para.innerText = message.text;
+    textP.innerText = text;
   }
   
-  div.appendChild(para);
-  document.querySelector('.chat-messages').appendChild(div);
+  div.appendChild(textP);
+  chatMessages.appendChild(div);
+  
+  // Auto-scroll to bottom
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Add room name to DOM
-function outputRoomName(room) {
-  roomName.innerText = room;
-}
-
-// Add users to DOM
-function outputUsers(users) {
+// Helper function to update user list
+function updateUserList(users) {
   userList.innerHTML = '';
   users.forEach((user) => {
     const li = document.createElement('li');
@@ -134,7 +128,7 @@ function outputUsers(users) {
   });
 }
 
-// Format file size
+// Helper function to format file size
 function formatFileSize(bytes) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -143,13 +137,16 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-//Prompt the user before leave chat room
+// Leave room handler
 document.getElementById('leave-btn').addEventListener('click', () => {
-  const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
-  if (leaveRoom) {
+  const confirmLeave = confirm('Are you sure you want to leave the chatroom?');
+  if (confirmLeave) {
     socket.emit('chatMessage', '/exit');
     setTimeout(() => {
-      window.location = 'index.html';
+      window.location.href = 'index.html';
     }, 1000);
   }
 });
+
+// Add initial connection message
+addMessage('System', 'Connecting to server...');
