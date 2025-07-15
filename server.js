@@ -3,10 +3,9 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
-const createAdapter = require("@socket.io/redis-adapter").createAdapter;
-const redis = require("redis");
-require("dotenv").config();
-const { createClient } = redis;
+const { validateUser, isAdmin } = require("./utils/auth");
+const { processCommand, isCommand, initiateShutdown } = require("./utils/commands");
+const { upload, getFileInfo } = require("./utils/fileHandler");
 const {
   userJoin,
   getCurrentUser,
@@ -18,28 +17,75 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// Set static folder
+// Middleware
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const botName = "ChatCord Bot";
+const MAX_CLIENTS = 10;
+let connectedClients = 0;
 
-(async () => {
-  pubClient = createClient({ url: "redis://127.0.0.1:6379" });
-  await pubClient.connect();
-  subClient = pubClient.duplicate();
-  io.adapter(createAdapter(pubClient, subClient));
-})();
+// Authentication endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  const user = validateUser(username, password);
+  if (user) {
+    res.json({ 
+      success: true, 
+      user: { 
+        id: user.id,
+        username: user.username,
+        role: user.role 
+      }
+    });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// File upload endpoint
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  const fileInfo = getFileInfo(req.file);
+  res.json({ success: true, file: fileInfo });
+});
+
+// Redirect root to login
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
 
 // Run when client connects
 io.on("connection", (socket) => {
-  console.log(io.of("/").adapter);
-  socket.on("joinRoom", ({ username, room }) => {
-    const user = userJoin(socket.id, username, room);
+  console.log("New client connected:", socket.id);
+  
+  // Check connection limit
+  if (connectedClients >= MAX_CLIENTS) {
+    socket.emit("message", formatMessage(botName, "Server is full. Maximum 10 clients allowed."));
+    socket.disconnect();
+    return;
+  }
 
+  connectedClients++;
+  console.log(`Client connected. Total clients: ${connectedClients}`);
+
+  socket.on("joinRoom", ({ username, room, userId }) => {
+    console.log("joinRoom event received:", { username, room, userId });
+    const user = userJoin(socket.id, username, room, userId);
     socket.join(user.room);
 
     // Welcome current user
     socket.emit("message", formatMessage(botName, "Welcome to ChatCord!"));
+    socket.emit("message", formatMessage(botName, "Type /exit or /quit to leave the chat" + (isAdmin(username) ? ", /shutdown to shutdown server" : "")));
 
     // Broadcast when a user connects
     socket.broadcast
@@ -59,12 +105,48 @@ io.on("connection", (socket) => {
   // Listen for chatMessage
   socket.on("chatMessage", (msg) => {
     const user = getCurrentUser(socket.id);
+    if (!user) return;
 
-    io.to(user.room).emit("message", formatMessage(user.username, msg));
+    // Check if message is a command
+    if (isCommand(msg)) {
+      const commandResult = processCommand(msg, user, socket, io);
+      
+      switch (commandResult.type) {
+        case 'disconnect':
+          socket.emit("message", formatMessage(botName, "Goodbye!"));
+          socket.disconnect();
+          break;
+        case 'shutdown':
+          io.emit("message", formatMessage(botName, commandResult.message));
+          initiateShutdown(io, server);
+          break;
+        case 'error':
+        case 'invalid':
+          socket.emit("message", formatMessage(botName, commandResult.message));
+          break;
+      }
+    } else {
+      // Regular message
+      io.to(user.room).emit("message", formatMessage(user.username, msg));
+    }
+  });
+
+  // Listen for file messages
+  socket.on("fileMessage", (data) => {
+    const user = getCurrentUser(socket.id);
+    if (!user) return;
+
+    const message = formatMessage(user.username, data.message);
+    message.file = data.file;
+    
+    io.to(user.room).emit("message", message);
   });
 
   // Runs when client disconnects
   socket.on("disconnect", () => {
+    connectedClients--;
+    console.log(`Client disconnected. Total clients: ${connectedClients}`);
+    
     const user = userLeave(socket.id);
 
     if (user) {

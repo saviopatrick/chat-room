@@ -36,6 +36,35 @@ a {
 	color: var(--dark-color-a);
 	border: 0;
 	font-size: 17px;
+	border-radius: 3px;
+}
+
+.btn:hover {
+	background: #ddd;
+}
+
+.btn-sm {
+	padding: 3px 8px;
+	font-size: 14px;
+}
+
+.btn-file {
+	background: var(--success-color);
+	color: white;
+	margin-right: 5px;
+}
+
+.btn-file:hover {
+	background: #4cae4c;
+}
+
+.btn-cancel {
+	background: var(--error-color);
+	color: white;
+}
+
+.btn-cancel:hover {
+	background: #c9302c;
 }
 
 /* Chat Page */
@@ -118,6 +147,12 @@ a {
 
 .chat-form-container form {
 	display: flex;
+	flex-direction: column;
+}
+
+.input-group {
+	display: flex;
+	align-items: center;
 }
 
 .chat-form-container input[type='text'] {
@@ -125,6 +160,61 @@ a {
 	padding: 5px;
 	height: 40px;
 	flex: 1;
+	border: none;
+	border-radius: 3px;
+	margin-right: 5px;
+}
+
+.file-preview {
+	background: rgba(255, 255, 255, 0.1);
+	padding: 10px;
+	border-radius: 5px;
+	margin-bottom: 10px;
+	display: none;
+}
+
+.file-preview-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.file-preview-item img {
+	border-radius: 5px;
+}
+
+.file-info {
+	flex: 1;
+	color: white;
+}
+
+.file-name {
+	display: block;
+	font-weight: bold;
+}
+
+.file-size {
+	display: block;
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.file-message {
+	margin-top: 10px;
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 5px;
+}
+
+.file-message img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+.file-message .file-info {
+	margin-top: 5px;
+	color: #666;
 }
 
 /* Join Page */
@@ -140,6 +230,20 @@ a {
 	background: var(--dark-color-a);
 	border-top-left-radius: 5px;
 	border-top-right-radius: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.join-header h1 {
+	margin: 0;
+}
+
+.user-info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 14px;
 }
 
 .join-main {
@@ -160,11 +264,14 @@ a {
 	margin-bottom: 5px;
 }
 
-.join-main input[type='text'] {
+.join-main input[type='text'],
+.join-main input[type='password'] {
 	font-size: 16px;
 	padding: 5px;
 	height: 40px;
 	width: 100%;
+	border: none;
+	border-radius: 3px;
 }
 
 .join-main select {
@@ -172,11 +279,39 @@ a {
 	padding: 5px;
 	height: 40px;
 	width: 100%;
+	border: none;
+	border-radius: 3px;
 }
 
 .join-main .btn {
 	margin-top: 20px;
 	width: 100%;
+}
+
+.error-message {
+	background: var(--error-color);
+	color: white;
+	padding: 10px;
+	border-radius: 3px;
+	margin-top: 10px;
+	text-align: center;
+}
+
+.demo-credentials {
+	margin-top: 20px;
+	padding: 15px;
+	background: rgba(0, 0, 0, 0.2);
+	border-radius: 5px;
+}
+
+.demo-credentials h3 {
+	margin-bottom: 10px;
+	font-size: 16px;
+}
+
+.demo-credentials p {
+	margin-bottom: 5px;
+	font-size: 14px;
 }
 
 @media (max-width: 700px) {
@@ -186,5 +321,15 @@ a {
 
 	.chat-sidebar {
 		display: none;
+	}
+	
+	.join-header {
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.user-info {
+		flex-direction: column;
+		gap: 5px;
 	}
 }
