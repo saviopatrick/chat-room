@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Test</title>
+</head>
+<body>
+    <h1>Socket.IO Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+        
+        socket.on('connect', () => {
+            statusDiv.textContent = 'Connected!';
+            console.log('Connected to server');
+            
+            // Test join room
+            socket.emit('joinRoom', { username: 'testuser', room: 'testroom' });
+        });
+        
+        socket.on('disconnect', () => {
+            statusDiv.textContent = 'Disconnected';
+            console.log('Disconnected from server');
+        });
+        
+        socket.on('message', (message) => {
+            const msgDiv = document.createElement('div');
+            msgDiv.textContent = `${message.username}: ${message.text}`;
+            messagesDiv.appendChild(msgDiv);
+        });
+        
+        socket.on('roomUsers', (data) => {
+            console.log('Room users:', data);
+        });
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            socket.emit('chatMessage', input.value);
+            input.value = '';
+        }
+    </script>
+</body>
+</html>

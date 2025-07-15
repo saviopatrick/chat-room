@@ -16,7 +16,10 @@
     <div class="chat-container">
       <header class="chat-header">
         <h1><i class="fas fa-smile"></i> ChatCord</h1>
-        <a id="leave-btn" class="btn">Leave Room</a>
+        <div class="header-info">
+          <span id="user-info"></span>
+          <a id="leave-btn" class="btn">Leave Room</a>
+        </div>
       </header>
       <main class="chat-main">
         <div class="chat-sidebar">
@@ -24,6 +27,14 @@
           <h2 id="room-name"></h2>
           <h3><i class="fas fa-users"></i> Users</h3>
           <ul id="users"></ul>
+          <div class="commands-info">
+            <h3><i class="fas fa-terminal"></i> Commands</h3>
+            <ul>
+              <li><code>/exit</code> - Leave chat</li>
+              <li><code>/quit</code> - Leave chat</li>
+              <li><code>/shutdown</code> - Admin only</li>
+            </ul>
+          </div>
         </div>
         <div class="chat-messages"></div>
       </main>
@@ -32,12 +43,16 @@
           <input
             id="msg"
             type="text"
-            placeholder="Enter Message"
+            placeholder="Enter Message or Command (/help for commands)"
             required
             autocomplete="off"
           />
-          <button class="btn"><i class="fas fa-paper-plane"></i> Send</button>
+          <button type="button" class="btn upload-btn" id="upload-btn">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Send</button>
         </form>
+        <div id="upload-progress" class="upload-progress" style="display: none;"></div>
       </div>
     </div>
 
@@ -48,5 +63,6 @@
     ></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/fileUpload.js"></script>
   </body>
 </html>

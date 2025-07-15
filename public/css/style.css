@@ -188,3 +188,151 @@ a {
 		display: none;
 	}
 }
+
+/* Authentication styles */
+.error-message {
+	color: var(--error-color);
+	background-color: #f8d7da;
+	border: 1px solid #f5c6cb;
+	padding: 10px;
+	margin-top: 10px;
+	border-radius: 4px;
+}
+
+.demo-credentials {
+	margin-top: 20px;
+	padding: 15px;
+	background-color: #f8f9fa;
+	border: 1px solid #dee2e6;
+	border-radius: 4px;
+}
+
+.demo-credentials h3 {
+	margin-bottom: 10px;
+	color: var(--dark-color-a);
+}
+
+.demo-credentials p {
+	margin-bottom: 5px;
+	font-size: 14px;
+}
+
+.logout-btn {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	padding: 5px 10px;
+	font-size: 14px;
+}
+
+.header-info {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+.header-info span {
+	font-size: 14px;
+	color: var(--light-color);
+}
+
+/* Password input styles */
+.join-main input[type='password'] {
+	font-size: 16px;
+	padding: 5px;
+	height: 40px;
+	width: 100%;
+}
+
+/* File upload styles */
+.upload-btn {
+	margin-left: 5px;
+	padding: 8px 12px;
+	background: var(--dark-color-a);
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.upload-btn:hover {
+	background: var(--dark-color-b);
+}
+
+.upload-progress {
+	text-align: center;
+	color: var(--dark-color-a);
+	padding: 5px;
+	font-size: 14px;
+}
+
+.file-message {
+	border-left: 4px solid var(--success-color);
+	padding-left: 10px;
+}
+
+.file-content {
+	margin-top: 10px;
+}
+
+.file-content img {
+	display: block;
+	margin: 5px 0;
+	border: 1px solid #ddd;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.file-content a {
+	color: var(--dark-color-a);
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.file-content a:hover {
+	text-decoration: underline;
+}
+
+.file-info {
+	font-size: 12px;
+	color: #666;
+	margin-top: 5px;
+}
+
+.commands-info {
+	margin-top: 20px;
+	padding: 15px;
+	background-color: #f8f9fa;
+	border-radius: 4px;
+}
+
+.commands-info h3 {
+	margin-bottom: 10px;
+	color: var(--dark-color-a);
+}
+
+.commands-info ul {
+	padding-left: 0;
+}
+
+.commands-info li {
+	margin-bottom: 5px;
+	font-size: 14px;
+}
+
+.commands-info code {
+	background-color: #e9ecef;
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: monospace;
+}
+
+/* Chat form improvements */
+.chat-form-container form {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.chat-form-container #msg {
+	flex: 1;
+}
