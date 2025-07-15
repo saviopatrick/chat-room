@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .chat-messages { height: 400px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; }
+        .meta { font-weight: bold; }
+        .form-container { display: flex; gap: 10px; }
+        .form-container input { flex: 1; padding: 10px; }
+        .form-container button { padding: 10px 20px; }
+        .sidebar { float: left; width: 200px; background: #f0f0f0; padding: 10px; margin-right: 20px; }
+        .main-content { overflow: hidden; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Room Test</h1>
+        <div class="sidebar">
+            <h3>Room: <span id="room-name">Python</span></h3>
+            <h3>Users:</h3>
+            <ul id="users"></ul>
+            <h3>Commands:</h3>
+            <ul>
+                <li>/exit - Leave chat</li>
+                <li>/quit - Leave chat</li>
+                <li>/shutdown - Admin only</li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="chat-messages" id="messages"></div>
+            <div class="form-container">
+                <input type="text" id="messageInput" placeholder="Type a message or command...">
+                <button onclick="sendMessage()">Send</button>
+                <button onclick="document.getElementById('fileInput').click()">Upload</button>
+                <input type="file" id="fileInput" style="display: none;" onchange="uploadFile()">
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messagesDiv = document.getElementById('messages');
+        const roomNameEl = document.getElementById('room-name');
+        const usersEl = document.getElementById('users');
+        const messageInput = document.getElementById('messageInput');
+        
+        // Get room and username from URL or set defaults
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username') || 'admin';
+        const room = urlParams.get('room') || 'Python';
+        
+        console.log('Username:', username, 'Room:', room);
+        
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            socket.emit('joinRoom', { username, room });
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+        
+        socket.on('message', (message) => {
+            console.log('Message received:', message);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `<p class="meta">${message.username} <span style="color: #999;">${message.time}</span></p><p>${message.text}</p>`;
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        
+        socket.on('roomUsers', ({ room, users }) => {
+            console.log('Room users:', room, users);
+            roomNameEl.textContent = room;
+            usersEl.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user.username;
+                usersEl.appendChild(li);
+            });
+        });
+        
+        socket.on('fileMessage', (message) => {
+            console.log('File message:', message);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `<p class="meta">${message.username} <span style="color: #999;">${message.time}</span></p>`;
+            
+            if (message.data.mimetype.startsWith('image/')) {
+                msgDiv.innerHTML += `<img src="/uploads/${message.data.filename}" style="max-width: 300px; max-height: 200px; display: block; margin: 5px 0;">`;
+            } else {
+                msgDiv.innerHTML += `<a href="/uploads/${message.data.filename}" target="_blank">${message.data.originalName}</a>`;
+            }
+            
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        
+        function sendMessage() {
+            const msg = messageInput.value.trim();
+            if (msg) {
+                socket.emit('chatMessage', msg);
+                messageInput.value = '';
+            }
+        }
+        
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const fileMessage = {
+                        type: 'file',
+                        filename: data.filename,
+                        originalName: data.originalName,
+                        mimetype: data.mimetype,
+                        size: data.size
+                    };
+                    
+                    socket.emit('fileMessage', fileMessage);
+                    fileInput.value = '';
+                } else {
+                    alert(data.message || 'Upload failed');
+                }
+            } catch (error) {
+                alert('Upload failed. Please try again.');
+                console.error('Upload error:', error);
+            }
+        }
+        
+        // Enter key to send message
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
