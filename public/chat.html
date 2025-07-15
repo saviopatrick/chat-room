@@ -28,11 +28,17 @@
         <div class="chat-messages"></div>
       </main>
       <div class="chat-form-container">
+        <div class="file-upload-section">
+          <input type="file" id="file-input" accept="image/*,.pdf,.txt" style="display: none;">
+          <button type="button" id="file-upload-btn" class="btn btn-secondary">
+            <i class="fas fa-file-upload"></i> Upload File
+          </button>
+        </div>
         <form id="chat-form">
           <input
             id="msg"
             type="text"
-            placeholder="Enter Message"
+            placeholder="Enter Message or /help for commands"
             required
             autocomplete="off"
           />
@@ -47,6 +53,7 @@
       crossorigin="anonymous"
     ></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/fileUpload.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

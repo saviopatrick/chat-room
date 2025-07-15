@@ -1,8 +1,14 @@
 const users = [];
+const MAX_USERS = 10;
 
 // Join user to chat
-function userJoin(id, username, room) {
-  const user = { id, username, room };
+function userJoin(id, username, room, role = 'user') {
+  // Check if room is at capacity
+  if (users.length >= MAX_USERS) {
+    return null;
+  }
+  
+  const user = { id, username, room, role };
 
   users.push(user);
 
@@ -28,9 +34,21 @@ function getRoomUsers(room) {
   return users.filter(user => user.room === room);
 }
 
+// Get total number of users
+function getTotalUsers() {
+  return users.length;
+}
+
+// Check if room is full
+function isRoomFull() {
+  return users.length >= MAX_USERS;
+}
+
 module.exports = {
   userJoin,
   getCurrentUser,
   userLeave,
-  getRoomUsers
+  getRoomUsers,
+  getTotalUsers,
+  isRoomFull
 };
