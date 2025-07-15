@@ -17,21 +17,15 @@
 		<div class="join-container">
 			<header class="join-header">
 				<h1><i class="fas fa-smile"></i> ChatCord</h1>
+				<p>Welcome, <span id="username-display"></span>!</p>
+				<button id="logout-btn" class="btn logout-btn">
+					<i class="fas fa-sign-out-alt"></i> Logout
+				</button>
 			</header>
 			<main class="join-main">
 				<form action="chat.html">
 					<div class="form-control">
-						<label for="username">Username</label>
-						<input
-							type="text"
-							name="username"
-							id="username"
-							placeholder="Enter username..."
-							required
-						/>
-					</div>
-					<div class="form-control">
-						<label for="room">Room</label>
+						<label for="room">Select Room</label>
 						<select name="room" id="room">
 							<option value="JavaScript">JavaScript</option>
 							<option value="Python">Python</option>
@@ -45,5 +39,34 @@
 				</form>
 			</main>
 		</div>
+
+		<script>
+			// Check if user is authenticated
+			document.addEventListener('DOMContentLoaded', () => {
+				const user = JSON.parse(sessionStorage.getItem('chatUser') || 'null');
+				
+				if (!user) {
+					window.location.href = 'login.html';
+					return;
+				}
+				
+				// Display username
+				document.getElementById('username-display').textContent = user.username;
+				
+				// Add username to form
+				const form = document.querySelector('form');
+				const usernameInput = document.createElement('input');
+				usernameInput.type = 'hidden';
+				usernameInput.name = 'username';
+				usernameInput.value = user.username;
+				form.appendChild(usernameInput);
+				
+				// Logout functionality
+				document.getElementById('logout-btn').addEventListener('click', () => {
+					sessionStorage.removeItem('chatUser');
+					window.location.href = 'login.html';
+				});
+			});
+		</script>
 	</body>
 </html>
