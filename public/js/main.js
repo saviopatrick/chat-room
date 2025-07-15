@@ -3,28 +3,62 @@ const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 
+console.log('Main.js loaded successfully');
+console.log('Qs available:', typeof Qs);
+console.log('Location search:', location.search);
+
+// Simple URL parameter parser as fallback
+function parseUrlParams(search) {
+  const params = {};
+  if (search) {
+    const searchParams = new URLSearchParams(search);
+    for (const [key, value] of searchParams) {
+      params[key] = value;
+    }
+  }
+  return params;
+}
+
 // Get username, room, and role from URL
-const urlParams = Qs.parse(location.search, {
-  ignoreQueryPrefix: true,
-});
+let urlParams;
+if (typeof Qs !== 'undefined') {
+  urlParams = Qs.parse(location.search, {
+    ignoreQueryPrefix: true,
+  });
+} else {
+  console.log('Qs not available, using fallback parser');
+  urlParams = parseUrlParams(location.search);
+}
 
 const username = urlParams.username;
 const room = urlParams.room;
 const role = urlParams.role;
 
+console.log('URL params:', { username, room, role });
+
 // Check if user is authenticated
 if (!username || !room) {
+  console.log('Missing username or room, redirecting to login');
   window.location.href = 'login.html';
 }
 
 const socket = io();
 
+// Debug socket connection
+socket.on('connect', () => {
+  console.log('Socket connected');
+  console.log('Emitting joinRoom with:', { username, room, role });
+  // Join chatroom once connected
+  socket.emit('joinRoom', { username, room, role });
+});
+
+socket.on('disconnect', () => {
+  console.log('Socket disconnected');
+});
+
 // Store user info for file uploads
 const user = { username, room, role };
 sessionStorage.setItem('user', JSON.stringify(user));
-
-// Join chatroom
-socket.emit('joinRoom', { username, room, role });
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {

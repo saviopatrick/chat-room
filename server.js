@@ -92,6 +92,12 @@ io.on("connection", (socket) => {
   });
   
   socket.on("joinRoom", ({ username, room, role }) => {
+    // Check if room is full
+    if (isRoomFull()) {
+      socket.emit("error", "Room is full. Maximum 10 users allowed.");
+      return;
+    }
+    
     const user = userJoin(socket.id, username, room, role);
     
     if (!user) {
