@@ -120,9 +120,12 @@ io.on("connection", (socket) => {
   console.log(`Connected clients: ${connectedClients}/${MAX_CLIENTS}`);
 
   socket.on("joinRoom", ({ username, room }) => {
+    console.log('Received joinRoom event:', { username, room });
     const user = userJoin(socket.id, username, room);
+    console.log('User joined:', user);
 
     socket.join(user.room);
+    console.log('Socket joined room:', user.room);
 
     // Welcome current user
     socket.emit("message", formatMessage(botName, "Welcome to ChatCord!"));
@@ -136,9 +139,11 @@ io.on("connection", (socket) => {
       );
 
     // Send users and room info
+    const roomUsers = getRoomUsers(user.room);
+    console.log('Room users:', roomUsers);
     io.to(user.room).emit("roomUsers", {
       room: user.room,
-      users: getRoomUsers(user.room),
+      users: roomUsers,
     });
   });
 

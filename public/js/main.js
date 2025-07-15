@@ -4,21 +4,6 @@ const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 const userInfo = document.getElementById('user-info');
 
-// Check authentication
-document.addEventListener('DOMContentLoaded', () => {
-  const user = JSON.parse(sessionStorage.getItem('chatUser') || 'null');
-  
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
-  }
-  
-  // Display user info
-  if (userInfo) {
-    userInfo.textContent = `Logged in as: ${user.username}`;
-  }
-});
-
 // Get username and room from URL
 const urlParams = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
@@ -27,18 +12,38 @@ const urlParams = Qs.parse(location.search, {
 const username = urlParams.username;
 const room = urlParams.room;
 
+console.log('URL params:', urlParams);
+console.log('Username:', username);
+console.log('Room:', room);
+
 // Validate that we have username and room
 if (!username || !room) {
+  console.log('Missing username or room, redirecting to index.html');
   window.location.href = 'index.html';
+  return; // Exit early if redirecting
 }
 
-const socket = io();
+console.log('Username and room found, proceeding with socket connection');
 
-// Join chatroom
-socket.emit('joinRoom', { username, room });
+const socket = io();
+console.log('Socket created:', socket);
+
+// Socket event handlers
+socket.on('connect', () => {
+  console.log('Connected to server');
+  
+  // Join chatroom
+  socket.emit('joinRoom', { username, room });
+  console.log('Emitted joinRoom event with:', { username, room });
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+});
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {
+  console.log('Received roomUsers event:', { room, users });
   outputRoomName(room);
   outputUsers(users);
 });
@@ -59,6 +64,26 @@ socket.on('fileMessage', (message) => {
   
   // Scroll down
   chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+// Check authentication after socket setup
+document.addEventListener('DOMContentLoaded', () => {
+  const user = JSON.parse(sessionStorage.getItem('chatUser') || 'null');
+  
+  console.log('Authentication check - user:', user);
+  
+  if (!user) {
+    console.log('No user found in session storage, redirecting to login');
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  // Display user info
+  if (userInfo) {
+    userInfo.textContent = `Logged in as: ${user.username}`;
+  }
+  
+  console.log('User authenticated, continuing with chat setup');
 });
 
 // Message submit
