@@ -3,15 +3,47 @@ const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 
+// Verificar autenticação
+let user = JSON.parse(localStorage.getItem('chatUser'));
+if (!user) {
+    window.location.href = 'login.html';
+    throw new Error('Usuário não autenticado');
+}
+
 // Get username and room from URL
-const { username, room } = Qs.parse(location.search, {
+const urlParams = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
 const socket = io();
 
-// Join chatroom
-socket.emit('joinRoom', { username, room });
+// Variável para controlar se já foi autenticado
+let isAuthenticated = false;
+
+// Autenticar socket
+socket.emit('authenticate', {
+    username: user.username,
+    password: user.password
+});
+
+// Eventos de autenticação
+socket.on('authSuccess', (data) => {
+    console.log('Autenticado com sucesso:', data.user);
+    isAuthenticated = true;
+    
+    // Join chatroom
+    socket.emit('joinRoom', { 
+        username: data.user.username, 
+        room: urlParams.room || 'Geral' 
+    });
+});
+
+socket.on('authError', (error) => {
+    console.error('Erro de autenticação:', error);
+    alert('Erro de autenticação: ' + error);
+    localStorage.removeItem('chatUser');
+    window.location.href = 'login.html';
+});
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {
@@ -23,28 +55,32 @@ socket.on('roomUsers', ({ room, users }) => {
 socket.on('message', (message) => {
   console.log(message);
   outputMessage(message);
-
-  // Scroll down
   chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+// Arquivo compartilhado
+socket.on('fileShared', (data) => {
+    outputFileMessage(data);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
 // Message submit
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
-  // Get message text
-  let msg = e.target.elements.msg.value;
+  if (!isAuthenticated) {
+    alert('Aguarde a autenticação...');
+    return;
+  }
 
+  let msg = e.target.elements.msg.value;
   msg = msg.trim();
 
   if (!msg) {
     return false;
   }
 
-  // Emit message to server
   socket.emit('chatMessage', msg);
-
-  // Clear input
   e.target.elements.msg.value = '';
   e.target.elements.msg.focus();
 });
@@ -53,16 +89,56 @@ chatForm.addEventListener('submit', (e) => {
 function outputMessage(message) {
   const div = document.createElement('div');
   div.classList.add('message');
+  
   const p = document.createElement('p');
   p.classList.add('meta');
   p.innerText = message.username;
   p.innerHTML += `<span>${message.time}</span>`;
   div.appendChild(p);
+  
   const para = document.createElement('p');
   para.classList.add('text');
   para.innerText = message.text;
   div.appendChild(para);
+  
   document.querySelector('.chat-messages').appendChild(div);
+}
+
+// Output file message
+function outputFileMessage(data) {
+    const div = document.createElement('div');
+    div.classList.add('message', 'file-message');
+    
+    const p = document.createElement('p');
+    p.classList.add('meta');
+    p.innerText = data.user;
+    p.innerHTML += `<span>${new Date().toLocaleTimeString()}</span>`;
+    div.appendChild(p);
+    
+    const fileDiv = document.createElement('div');
+    fileDiv.classList.add('file-content');
+    
+    // Se for imagem, mostrar preview
+    if (data.file.mimetype.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = `/uploads/${data.file.filename}`;
+        img.alt = data.file.originalName;
+        img.style.maxWidth = '300px';
+        img.style.maxHeight = '200px';
+        img.style.borderRadius = '5px';
+        fileDiv.appendChild(img);
+    }
+    
+    // Link para download
+    const downloadLink = document.createElement('a');
+    downloadLink.href = `/api/download/${data.file.filename}`;
+    downloadLink.innerHTML = `<i class="fas fa-download"></i> ${data.file.originalName}`;
+    downloadLink.style.display = 'block';
+    downloadLink.style.marginTop = '5px';
+    fileDiv.appendChild(downloadLink);
+    
+    div.appendChild(fileDiv);
+    document.querySelector('.chat-messages').appendChild(div);
 }
 
 // Add room name to DOM
@@ -80,11 +156,20 @@ function outputUsers(users) {
   });
 }
 
-//Prompt the user before leave chat room
+// Leave room
 document.getElementById('leave-btn').addEventListener('click', () => {
-  const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
+  const leaveRoom = confirm('Tem certeza que deseja sair da sala?');
   if (leaveRoom) {
-    window.location = '../index.html';
-  } else {
+    socket.emit('chatMessage', '/exit');
+    localStorage.removeItem('chatUser');
+    window.location = 'login.html';
   }
+});
+
+// Detectar desconexão
+socket.on('disconnect', () => {
+    console.log('Desconectado do servidor');
+    alert('Conexão perdida. Redirecionando para login...');
+    localStorage.removeItem('chatUser');
+    window.location.href = 'login.html';
 });
