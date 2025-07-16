@@ -1,139 +1,123 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css"
-			integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk="
-			crossorigin="anonymous"
-		/>
-		<link rel="stylesheet" href="css/style.css" />
-		<title>ChatCord - Sala de Chat</title>
-	</head>
-	<body>
-		<div class="join-container">
-			<header class="join-header">
-				<h1><i class="fas fa-comments"></i> ChatCord</h1>
-				<p>Selecione uma sala para entrar</p>
-			</header>
-			<main class="join-main">
-				<div class="user-info" id="userInfo">
-					<p>Logado como: <span id="currentUser"></span></p>
-					<button class="btn" onclick="logout()">
-						<i class="fas fa-sign-out-alt"></i> Sair
-					</button>
-				</div>
-				
-				<form action="chat.html" method="get" id="roomForm">
-					<div class="form-control">
-						<label for="room">Sala</label>
-						<select name="room" id="room" required>
-							<option value="Geral">Geral</option>
-							<option value="JavaScript">JavaScript</option>
-							<option value="Python">Python</option>
-							<option value="PHP">PHP</option>
-							<option value="C#">C#</option>
-							<option value="Ruby">Ruby</option>
-							<option value="Java">Java</option>
-						</select>
-					</div>
-					<button type="submit" class="btn">
-						<i class="fas fa-sign-in-alt"></i> Entrar na Sala
-					</button>
-				</form>
-				
-				<div class="commands-help">
-					<h3><i class="fas fa-terminal"></i> Comandos Disponíveis</h3>
-					<ul>
-						<li><code>/help</code> - Mostra ajuda</li>
-						<li><code>/users</code> - Lista usuários online</li>
-						<li><code>/exit</code> ou <code>/quit</code> - Sair da sala</li>
-						<li><code>/shutdown</code> - Desligar servidor (apenas admin)</li>
-					</ul>
-				</div>
-			</main>
-		</div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - Escolha sua Sala</title>
+</head>
+<body>
+    <div class="join-container">
+        <header class="join-header">
+            <h1><i class="fas fa-comments"></i> ChatCord</h1>
+            <p>Escolha uma sala e comece a conversar</p>
+        </header>
+        
+        <main class="join-main">
+            <div class="user-info" id="userInfo">
+                <p>
+                    <i class="fas fa-user-circle"></i> 
+                    Conectado como: <span id="currentUser"></span>
+                </p>
+                <button class="btn btn-danger" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+            
+            <form action="chat.html" method="get" id="roomForm">
+                <div class="form-control">
+                    <label for="room">
+                        <i class="fas fa-door-open"></i> Selecione uma Sala
+                    </label>
+                    <select name="room" id="room" required>
+                        <option value="">Escolha uma sala...</option>
+                        <option value="Geral">💬 Geral</option>
+                        <option value="JavaScript">🟨 JavaScript</option>
+                        <option value="Python">🐍 Python</option>
+                        <option value="PHP">🐘 PHP</option>
+                        <option value="C#">🔷 C#</option>
+                        <option value="Ruby">💎 Ruby</option>
+                        <option value="Java">☕ Java</option>
+                        <option value="React">⚛️ React</option>
+                        <option value="Vue">💚 Vue.js</option>
+                        <option value="Angular">🅰️ Angular</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i> Entrar na Sala
+                </button>
+            </form>
+            
+            <div class="commands-help">
+                <h3><i class="fas fa-terminal"></i> Comandos Disponíveis</h3>
+                <ul>
+                    <li><code>/help</code> - Mostra lista de comandos</li>
+                    <li><code>/users</code> - Lista usuários online na sala</li>
+                    <li><code>/rooms</code> - Lista todas as salas disponíveis</li>
+                    <li><code>/time</code> - Mostra a hora atual</li>
+                    <li><code>/exit</code> ou <code>/quit</code> - Sair da sala</li>
+                    <li><code>/clear</code> - Limpar histórico de mensagens</li>
+                    <li><code>/shutdown</code> - Desligar servidor (apenas admin)</li>
+                </ul>
+            </div>
+        </main>
+    </div>
 
-		<script>
-			// Verificar autenticação
-			let user = null;
-			try {
-				user = JSON.parse(localStorage.getItem('chatUser'));
-			} catch (e) {
-				console.error('Erro ao ler dados do usuário:', e);
-			}
+    <script>
+        // Verificar autenticação
+        let user = null;
+        try {
+            user = JSON.parse(localStorage.getItem('chatUser'));
+        } catch (e) {
+            console.error('Erro ao ler dados do usuário:', e);
+        }
 
-			if (!user || !user.username) {
-				console.log('Usuário não encontrado, redirecionando para login');
-				window.location.href = 'login.html';
-			} else {
-				console.log('Usuário logado:', user);
-				document.getElementById('currentUser').textContent = user.username;
-				if (user.role === 'admin') {
-					document.getElementById('currentUser').innerHTML += ' <i class="fas fa-crown" style="color: gold;"></i>';
-				}
-			}
+        if (!user || !user.username) {
+            console.log('Usuário não encontrado, redirecionando para login');
+            window.location.href = 'login.html';
+        } else {
+            console.log('Usuário logado:', user);
+            const userSpan = document.getElementById('currentUser');
+            userSpan.textContent = user.username;
+            
+            if (user.role === 'admin') {
+                userSpan.innerHTML += ' <i class="fas fa-crown" style="color: #f6ad55; margin-left: 4px;"></i>';
+            }
+        }
 
-			function logout() {
-				localStorage.removeItem('chatUser');
-				window.location.href = 'login.html';
-			}
+        function logout() {
+            localStorage.removeItem('chatUser');
+            window.location.href = 'login.html';
+        }
 
-			// Validar formulário antes de enviar
-			document.getElementById('roomForm').addEventListener('submit', function(e) {
-				const user = JSON.parse(localStorage.getItem('chatUser'));
-				if (!user) {
-					e.preventDefault();
-					alert('Sessão expirada. Faça login novamente.');
-					window.location.href = 'login.html';
-				}
-			});
-		</script>
-		
-		<style>
-			.user-info {
-				background: var(--light-color);
-				padding: 15px;
-				color:black;
-				border-radius: 5px;
-				margin-bottom: 20px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-			
-			.commands-help {
-				color:black;
-				margin-top: 30px;
-				padding: 20px;
-				background: #f8f9fa;
-				border-radius: 5px;
-			}
-			
-			.commands-help h3 {
-				margin-bottom: 15px;
-				color: var(--dark-color-b);
-			}
-			
-			.commands-help ul {
-				list-style: none;
-			}
-			
-			.commands-help li {
-				margin-bottom: 8px;
-				padding: 5px;
-			}
-			
-			.commands-help code {
-				background: var(--dark-color-a);
-				color: white;
-				padding: 2px 6px;
-				border-radius: 3px;
-				font-family: monospace;
-			}
-		</style>
-	</body>
+        // Validar formulário antes de enviar
+        document.getElementById('roomForm').addEventListener('submit', function(e) {
+            const user = JSON.parse(localStorage.getItem('chatUser'));
+            if (!user) {
+                e.preventDefault();
+                alert('Sessão expirada. Faça login novamente.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const room = document.getElementById('room').value;
+            if (!room) {
+                e.preventDefault();
+                alert('Por favor, selecione uma sala.');
+                return;
+            }
+        });
+
+        // Animação para o select
+        document.getElementById('room').addEventListener('change', function() {
+            this.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    </script>
+</body>
 </html>

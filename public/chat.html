@@ -1,52 +1,141 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css"
-      integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk="
-      crossorigin="anonymous"
-    />  
-    <link rel="stylesheet" href="css/style.css" />
-    <title>Bate Papo</title>
-  </head>
-  <body>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - Sala de Chat</title>
+</head>
+<body>
     <div class="chat-container">
-      <header class="chat-header">
-        <h1><i class="fas fa-smile"></i> BatePapo</h1>
-        <a id="leave-btn" class="btn">Sair Da Sala</a>
-      </header>
-      <main class="chat-main">
-        <div class="chat-sidebar">
-          <h3><i class="fas fa-comments"></i> Nome da Sala:</h3>
-          <h2 id="room-name"></h2>
-          <h3><i class="fas fa-users"></i> Usuarios</h3>
-          <ul id="users"></ul>
+        <header class="chat-header">
+            <h1><i class="fas fa-comments"></i> ChatCord</h1>
+            <a id="leave-btn" class="btn">
+                <i class="fas fa-door-open"></i> Sair da Sala
+            </a>
+        </header>
+        
+        <main class="chat-main">
+            <div class="chat-sidebar">
+                <div>
+                    <h3><i class="fas fa-hashtag"></i> Sala Atual</h3>
+                    <h2 id="room-name"></h2>
+                </div>
+                
+                <div>
+                    <h3><i class="fas fa-users"></i> Usuários Online</h3>
+                    <ul id="users"></ul>
+                </div>
+                
+                <div class="room-info">
+                    <h3><i class="fas fa-info-circle"></i> Informações</h3>
+                    <div style="background: var(--white); padding: 12px; border-radius: var(--border-radius-sm); font-size: 14px; color: var(--gray-600);">
+                        <p><strong>Usuários:</strong> <span id="user-count">0</span></p>
+                        <p><strong>Mensagens:</strong> <span id="message-count">0</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Mensagens serão inseridas aqui -->
+            </div>
+        </main>
+        
+        <div class="chat-form-container">
+            <form id="chat-form">
+                <input
+                    id="msg"
+                    type="text"
+                    placeholder="Digite sua mensagem..."
+                    required
+                    autocomplete="off"
+                />
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </form>
+            
+            <button class="upload-btn" id="upload-btn">
+                <i class="fas fa-paperclip"></i> Arquivo
+            </button>
+            <input type="file" id="file-input" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx,.txt">
         </div>
-        <div class="chat-messages"></div>
-      </main>
-      <div class="chat-form-container">
-        <form id="chat-form">
-          <input
-            id="msg"
-            type="text"
-            placeholder="Enter Message"
-            required
-            autocomplete="off"
-          />
-          <button class="btn"><i class="fas fa-paper-plane"></i> Enviar</button>
-        </form>
-      </div>
     </div>
 
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.2/qs.min.js"
-      integrity="sha256-TDxXjkAUay70ae/QJBEpGKkpVslXaHHayklIVglFRT4="
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.2/qs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/main.js"></script>
-  </body>
+    
+    <script>
+        // Adicionar funcionalidade de upload de arquivo
+        document.getElementById('upload-btn').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+
+        // Contador de mensagens
+        let messageCount = 0;
+        
+        // Função para atualizar contadores
+        function updateCounters() {
+            document.getElementById('message-count').textContent = messageCount;
+        }
+
+        // Observar novas mensagens
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    messageCount = document.querySelectorAll('.message').length;
+                    updateCounters();
+                }
+            });
+        });
+
+        // Iniciar observação
+        observer.observe(document.getElementById('chat-messages'), {
+            childList: true,
+            subtree: true
+        });
+
+        // Scroll automático para novas mensagens
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Adicionar efeito de digitação
+        const messageInput = document.getElementById('msg');
+        let typingTimer;
+
+        messageInput.addEventListener('input', function() {
+            clearTimeout(typingTimer);
+            // Aqui você pode adicionar lógica para mostrar "usuário está digitando..."
+            
+            typingTimer = setTimeout(function() {
+                // Usuário parou de digitar
+            }, 1000);
+        });
+
+        // Adicionar suporte para Enter para enviar
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Adicionar indicador de status online
+        function updateOnlineStatus() {
+            const users = document.querySelectorAll('#users li');
+            users.forEach(user => {
+                if (!user.querySelector('.status-online')) {
+                    user.innerHTML = `<i class="fas fa-circle status-online" style="font-size: 8px; margin-right: 8px;"></i>${user.textContent}`;
+                }
+            });
+        }
+
+        // Atualizar status a cada 30 segundos
+        setInterval(updateOnlineStatus, 30000);
+    </script>
+</body>
 </html>
