@@ -1,4 +1,4 @@
-# ChatCord - Documentação do Sistema de Chat
+# SALA DE BATE PAPO - Documentação do Sistema de Chat
 
 ## 1. Documentação Externa
 
