@@ -10,7 +10,7 @@ if (!user) {
     throw new Error('Usuário não autenticado');
 }
 
-// Get username and room from URL
+// Pega username e a sala para URL
 const urlParams = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
@@ -31,7 +31,6 @@ socket.on('authSuccess', (data) => {
     console.log('Autenticado com sucesso:', data.user);
     isAuthenticated = true;
     
-    // Join chatroom
     socket.emit('joinRoom', { 
         username: data.user.username, 
         room: urlParams.room || 'Geral' 

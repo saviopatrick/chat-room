@@ -27,7 +27,7 @@ const authManager = new AuthManager();
 const commandHandler = new CommandHandler(io, authManager);
 const fileHandler = new FileHandler();
 
-const botName = "ChatCord Bot";
+const botName = "Chat Bot";
 const MAX_CLIENTS = 10;
 let connectedClients = 0;
 
